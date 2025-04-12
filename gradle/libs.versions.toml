@@ -1,0 +1,31 @@
+[versions]
+# 기존 항목
+commons-math3 = "3.6.1"
+guava = "33.3.1-jre"
+junit-jupiter = "5.11.3"
+
+# 추가할 버전들
+feign = "12.5"
+jackson = "2.15.3"
+caffeine = "3.1.8"
+cronutils = "9.2.0"
+slf4j = "2.0.9"
+
+[libraries]
+# 기존 항목
+commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+
+# 추가된 의존성 항목
+feign-core = { module = "io.github.openfeign:feign-core", version.ref = "feign" }
+feign-okhttp = { module = "io.github.openfeign:feign-okhttp", version.ref = "feign" }
+
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+cron-utils = { module = "com.cronutils:cron-utils", version.ref = "cronutils" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
