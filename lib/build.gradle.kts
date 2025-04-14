@@ -9,30 +9,27 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
+    // ✅ 테스트 라이브러리 (JUnit Jupiter)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    // Sample dependencies from template
-    api(libs.commons.math3)
-    implementation(libs.guava)
+    // ✅ HTTP 클라이언트 (경량화: Feign 제거, OkHttp 직접 사용 가능)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0") // 최신 OkHttp 사용
 
-    // Feign client
-    implementation("io.github.openfeign:feign-core:12.5")
-    implementation("io.github.openfeign:feign-okhttp:12.5")
-
-    // Jackson
+    // ✅ JSON 직렬화/역직렬화
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.3")
 
-    // Caffeine for caching
+    // ✅ 로컬 캐싱
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-    // Cron-utils for scheduling
-    implementation("com.cronutils:cron-utils:9.2.0")
+    // ✅ 스케줄링
+     implementation("com.cronutils:cron-utils:9.2.0")
 
-    // SLF4J logging
-    implementation("org.slf4j:slf4j-api:2.0.9")
-    runtimeOnly("org.slf4j:slf4j-simple:2.0.9")
+    // ✅ 로깅 API만 제공 (구현체는 사용자가 선택)
+    api("org.slf4j:slf4j-api:2.0.9")
+
+    // ❌ 구현체는 포함하지 않음 (사용자 측에서 선택하도록)
+    // runtimeOnly("org.slf4j:slf4j-simple:2.0.9")
 }
 
 java {
