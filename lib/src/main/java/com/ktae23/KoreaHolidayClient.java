@@ -17,6 +17,8 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
+    private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo";
+
     private final KoreaHolidayClientCache cache;
 
     private final ObjectMapper objectMapper;
@@ -25,7 +27,7 @@ public class KoreaHolidayClient {
 
     private final String apiKey;
 
-    public KoreaHolidayClient(final String apiKey) {
+    private KoreaHolidayClient(String apiKey) {
         this.okHttpClient = new OkHttpClient();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
@@ -78,22 +80,12 @@ public class KoreaHolidayClient {
 
     public List<LocalDate> getHolidaysInMonth(final YearMonth yearMonth) {
         final String url = String.format(
-                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
-                        "?solYear=%d&solMonth=%02d&_type=json&ServiceKey=%s",
-                yearMonth.getYear(), yearMonth.getMonthValue(), apiKey
+                API_URL + "?solYear=%d&solMonth=%02d&_type=json&ServiceKey=%s",
+                yearMonth.getYear(),
+                yearMonth.getMonthValue(),
+                apiKey
         );
-
         return cache.getYearMonthListCache().get(yearMonth, ym -> fetch(url));
-    }
-
-    public List<LocalDate> getHolidaysInYear(final int year) {
-        final String url = String.format(
-                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
-                        "?solYear=%d&_type=json&ServiceKey=%s",
-                year, apiKey
-        );
-
-        return cache.getYearListCache().get(year, ym -> fetch(url));
     }
 
     @NotNull
@@ -105,7 +97,7 @@ public class KoreaHolidayClient {
 
         try (Response response = okHttpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new RuntimeException("Failed to fetch holidays: " + response);
+                throw new HolidayClientException("Failed to fetch holidays: " + response);
             }
 
             if (response.body() == null) {
@@ -129,7 +121,12 @@ public class KoreaHolidayClient {
             }
             return holidays;
         } catch (Exception e) {
-            throw new RuntimeException("Error while calling holiday API", e);
+            throw new HolidayClientException("Error while calling holiday API", e);
         }
+    }
+
+    public List<LocalDate> getHolidaysInYear(final int year) {
+        final String url = String.format(API_URL + "?solYear=%d&_type=json&ServiceKey=%s", year, apiKey);
+        return cache.getYearListCache().get(year, ym -> fetch(url));
     }
 }
