@@ -17,6 +17,8 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
+    private final KoreaHolidayClientCache cache = new KoreaHolidayClientCache();
+
     private final ObjectMapper objectMapper;
 
     private final OkHttpClient okHttpClient;
@@ -78,7 +80,7 @@ public class KoreaHolidayClient {
                 yearMonth.getYear(), yearMonth.getMonthValue(), apiKey
         );
 
-        return fetch(url);
+        return cache.getYearMonthListCache().get(yearMonth, ym -> fetch(url));
     }
 
     @NotNull
@@ -98,7 +100,7 @@ public class KoreaHolidayClient {
             }
 
             final String json = response.body().string();
-            if (json == null || json.trim().isEmpty()) {
+            if (json.trim().isEmpty()) {
                 return List.of();
             }
             final HolidayResponse holidayResponse = objectMapper.readValue(json, HolidayResponse.class);
@@ -125,6 +127,6 @@ public class KoreaHolidayClient {
                 year, apiKey
         );
 
-        return fetch(url);
+        return cache.getYearListCache().get(year, ym -> fetch(url));
     }
 }
