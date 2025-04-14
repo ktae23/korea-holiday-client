@@ -17,7 +17,7 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     private final OkHttpClient okHttpClient;
 
@@ -25,6 +25,13 @@ public class KoreaHolidayClient {
 
     public KoreaHolidayClient(final String apiKey) {
         this.okHttpClient = new OkHttpClient();
+        this.objectMapper = new ObjectMapper();
+        this.apiKey = apiKey;
+    }
+
+    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper) {
+        this.okHttpClient = okHttpClient;
+        this.objectMapper = objectMapper;
         this.apiKey = apiKey;
     }
 
@@ -91,6 +98,9 @@ public class KoreaHolidayClient {
             }
 
             final String json = response.body().string();
+            if (json == null || json.trim().isEmpty()) {
+                return List.of();
+            }
             final HolidayResponse holidayResponse = objectMapper.readValue(json, HolidayResponse.class);
 
             final List<LocalDate> holidays = new ArrayList<>();
