@@ -30,9 +30,19 @@
 
 GitHub Packages에서 의존성을 추가합니다.
 
+
+
 ```kotlin
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
 dependencies {
-    implementation("com.ktae23:korea-holiday-client:1.0.0")
+    implementation("com.github.ktae23:korea-holiday-client:latest")
 }
 ```
 
