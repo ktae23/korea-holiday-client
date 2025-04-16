@@ -30,7 +30,7 @@ public class KoreaHolidayClient {
 
     private final String apiKey;
 
-    private KoreaHolidayClient(String apiKey) {
+    public KoreaHolidayClient(String apiKey) {
         this.okHttpClient = new OkHttpClient();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
@@ -116,7 +116,7 @@ public class KoreaHolidayClient {
 
             if (items != null) {
                 for (HolidayResponse.Item item : items) {
-                    LocalDate date = LocalDate.parse(String.valueOf(item.localDate), DateTimeFormatter.ofPattern("yyyyMMdd"));
+                    LocalDate date = LocalDate.parse(item.localDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
                     holidays.add(date);
                 }
             }
@@ -129,8 +129,8 @@ public class KoreaHolidayClient {
     public List<LocalDate> getHolidaysInYear(final int year) {
         final Cache<Integer, List<LocalDate>> yearCache = cache.getYearCache();
 
-        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
-        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
+        yearCache.get(year - 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
+        yearCache.get(year + 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
 
         return yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
     }
