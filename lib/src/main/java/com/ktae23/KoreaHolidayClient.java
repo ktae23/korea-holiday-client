@@ -19,6 +19,8 @@ public class KoreaHolidayClient {
 
     private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo";
 
+    private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s";
+
     private final KoreaHolidayClientCache cache;
 
     private final ObjectMapper objectMapper;
@@ -34,8 +36,10 @@ public class KoreaHolidayClient {
         this.cache = new KoreaHolidayClientCache();
     }
 
-    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
-                              final KoreaHolidayClientCache cache) {
+    public KoreaHolidayClient(
+            final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
+            final KoreaHolidayClientCache cache
+    ) {
         this.okHttpClient = okHttpClient;
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
@@ -79,13 +83,9 @@ public class KoreaHolidayClient {
     }
 
     public List<LocalDate> getHolidaysInMonth(final YearMonth yearMonth) {
-        final String url = String.format(
-                API_URL + "?solYear=%d&solMonth=%02d&_type=json&ServiceKey=%s",
-                yearMonth.getYear(),
-                yearMonth.getMonthValue(),
-                apiKey
-        );
-        return cache.getYearMonthListCache().get(yearMonth, ym -> fetch(url));
+        return getHolidaysInYear(yearMonth.getYear()).stream()
+                .filter(holiday -> YearMonth.of(holiday.getYear(), holiday.getMonthValue()).equals(yearMonth))
+                .toList();
     }
 
     @NotNull
@@ -126,7 +126,6 @@ public class KoreaHolidayClient {
     }
 
     public List<LocalDate> getHolidaysInYear(final int year) {
-        final String url = String.format(API_URL + "?solYear=%d&_type=json&ServiceKey=%s", year, apiKey);
-        return cache.getYearListCache().get(year, ym -> fetch(url));
+        return cache.getYearCache().get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
     }
 }

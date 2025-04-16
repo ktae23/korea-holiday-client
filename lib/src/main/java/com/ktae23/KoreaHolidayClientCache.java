@@ -10,24 +10,14 @@ import java.util.concurrent.TimeUnit;
 
 class KoreaHolidayClientCache {
 
-    public Cache<YearMonth, List<LocalDate>> getYearMonthListCache() {
-        return yearMonthListCache;
+    public Cache<Integer, List<LocalDate>> getYearCache() {
+        return yearCache;
     }
 
-    public Cache<Integer, List<LocalDate>> getYearListCache() {
-        return yearListCache;
-    }
-
-    private final Cache<YearMonth, List<LocalDate>> yearMonthListCache;
-
-    private final Cache<Integer, List<LocalDate>> yearListCache;
+    private final Cache<Integer, List<LocalDate>> yearCache;
 
     public KoreaHolidayClientCache() {
-        this.yearMonthListCache = Caffeine.newBuilder()
-                .expireAfterWrite(12, TimeUnit.HOURS)
-                .maximumSize(100)
-                .build();
-        this.yearListCache = Caffeine.newBuilder()
+        this.yearCache = Caffeine.newBuilder()
                 .expireAfterWrite(12, TimeUnit.HOURS)
                 .maximumSize(100)
                 .build();
