@@ -3,16 +3,48 @@
  */
 package com.ktae23;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
+
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class KoreaHolidayClient {
 
+    private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo";
+
+    private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s&numOfRows=100";
+
+    private final KoreaHolidayClientCache cache;
+
+    private final ObjectMapper objectMapper;
+
+    private final OkHttpClient okHttpClient;
+
     private final String apiKey;
 
-    public KoreaHolidayClient(final String apiKey) {
+    private KoreaHolidayClient(String apiKey) {
+        this.okHttpClient = new OkHttpClient();
+        this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
+        this.cache = new KoreaHolidayClientCache();
+    }
+
+    public KoreaHolidayClient(
+            final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
+            final KoreaHolidayClientCache cache
+    ) {
+        this.okHttpClient = okHttpClient;
+        this.objectMapper = objectMapper;
+        this.apiKey = apiKey;
+        this.cache = cache;
     }
 
     public boolean isHoliday(final LocalDate date) {
@@ -52,10 +84,54 @@ public class KoreaHolidayClient {
     }
 
     public List<LocalDate> getHolidaysInMonth(final YearMonth yearMonth) {
-        return List.of(); // Placeholder for actual API response
+        return getHolidaysInYear(yearMonth.getYear()).stream()
+                .filter(holiday -> YearMonth.of(holiday.getYear(), holiday.getMonthValue()).equals(yearMonth))
+                .toList();
+    }
+
+    @NotNull
+    private List<LocalDate> fetch(final String url) {
+        final Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new HolidayClientException("Failed to fetch holidays: " + response);
+            }
+
+            if (response.body() == null) {
+                return List.of();
+            }
+
+            final String json = response.body().string();
+            if (json.trim().isEmpty()) {
+                return List.of();
+            }
+            final HolidayResponse holidayResponse = objectMapper.readValue(json, HolidayResponse.class);
+
+            final List<LocalDate> holidays = new ArrayList<>();
+            final List<HolidayResponse.Item> items = holidayResponse.response.body.items.item;
+
+            if (items != null) {
+                for (HolidayResponse.Item item : items) {
+                    LocalDate date = LocalDate.parse(String.valueOf(item.localDate), DateTimeFormatter.ofPattern("yyyyMMdd"));
+                    holidays.add(date);
+                }
+            }
+            return holidays;
+        } catch (Exception e) {
+            throw new HolidayClientException("Error while calling holiday API", e);
+        }
     }
 
     public List<LocalDate> getHolidaysInYear(final int year) {
-        return List.of(); // Placeholder for actual API response
+        final Cache<Integer, List<LocalDate>> yearCache = cache.getYearCache();
+
+        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
+        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
+
+        return yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
     }
 }

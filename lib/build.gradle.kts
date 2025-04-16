@@ -9,29 +9,18 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
 
-    // Sample dependencies from template
-    api(libs.commons.math3)
-    implementation(libs.guava)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0") // 최신 OkHttp 사용
 
-    // Feign client
-    implementation("io.github.openfeign:feign-core:12.5")
-    implementation("io.github.openfeign:feign-okhttp:12.5")
-
-    // Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.3")
 
-    // Caffeine for caching
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
-
-    // Cron-utils for scheduling
     implementation("com.cronutils:cron-utils:9.2.0")
-
-    // SLF4J logging
-    implementation("org.slf4j:slf4j-api:2.0.9")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.9")
 }
 
