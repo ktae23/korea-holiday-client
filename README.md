@@ -31,8 +31,8 @@
 GitHub Packages에서 의존성을 추가합니다.
 
 
-
-```kotlin
+```groovy
+// settings.gradle
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -40,7 +40,11 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
+```
 
+
+```kotlin
+// build.gradle.kts
 dependencies {
     implementation("com.github.ktae23:korea-holiday-client:latest")
 }
