@@ -17,7 +17,7 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
-    private final KoreaHolidayClientCache cache = new KoreaHolidayClientCache();
+    private final KoreaHolidayClientCache cache;
 
     private final ObjectMapper objectMapper;
 
@@ -29,12 +29,15 @@ public class KoreaHolidayClient {
         this.okHttpClient = new OkHttpClient();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
+        this.cache = new KoreaHolidayClientCache();
     }
 
-    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper) {
+    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
+                              final KoreaHolidayClientCache cache) {
         this.okHttpClient = okHttpClient;
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
+        this.cache = cache;
     }
 
     public boolean isHoliday(final LocalDate date) {
@@ -83,6 +86,16 @@ public class KoreaHolidayClient {
         return cache.getYearMonthListCache().get(yearMonth, ym -> fetch(url));
     }
 
+    public List<LocalDate> getHolidaysInYear(final int year) {
+        final String url = String.format(
+                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
+                        "?solYear=%d&_type=json&ServiceKey=%s",
+                year, apiKey
+        );
+
+        return cache.getYearListCache().get(year, ym -> fetch(url));
+    }
+
     @NotNull
     private List<LocalDate> fetch(final String url) {
         final Request request = new Request.Builder()
@@ -118,15 +131,5 @@ public class KoreaHolidayClient {
         } catch (Exception e) {
             throw new RuntimeException("Error while calling holiday API", e);
         }
-    }
-
-    public List<LocalDate> getHolidaysInYear(final int year) {
-        final String url = String.format(
-                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
-                        "?solYear=%d&_type=json&ServiceKey=%s",
-                year, apiKey
-        );
-
-        return cache.getYearListCache().get(year, ym -> fetch(url));
     }
 }
