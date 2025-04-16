@@ -30,7 +30,7 @@ public class KoreaHolidayClient {
 
     private final String apiKey;
 
-    private KoreaHolidayClient(String apiKey) {
+    public KoreaHolidayClient(String apiKey) {
         this.okHttpClient = new OkHttpClient();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
