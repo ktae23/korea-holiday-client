@@ -17,6 +17,8 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
+    private final KoreaHolidayClientCache cache;
+
     private final ObjectMapper objectMapper;
 
     private final OkHttpClient okHttpClient;
@@ -27,12 +29,15 @@ public class KoreaHolidayClient {
         this.okHttpClient = new OkHttpClient();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
+        this.cache = new KoreaHolidayClientCache();
     }
 
-    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper) {
+    public KoreaHolidayClient(final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
+                              final KoreaHolidayClientCache cache) {
         this.okHttpClient = okHttpClient;
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
+        this.cache = cache;
     }
 
     public boolean isHoliday(final LocalDate date) {
@@ -78,7 +83,17 @@ public class KoreaHolidayClient {
                 yearMonth.getYear(), yearMonth.getMonthValue(), apiKey
         );
 
-        return fetch(url);
+        return cache.getYearMonthListCache().get(yearMonth, ym -> fetch(url));
+    }
+
+    public List<LocalDate> getHolidaysInYear(final int year) {
+        final String url = String.format(
+                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
+                        "?solYear=%d&_type=json&ServiceKey=%s",
+                year, apiKey
+        );
+
+        return cache.getYearListCache().get(year, ym -> fetch(url));
     }
 
     @NotNull
@@ -98,7 +113,7 @@ public class KoreaHolidayClient {
             }
 
             final String json = response.body().string();
-            if (json == null || json.trim().isEmpty()) {
+            if (json.trim().isEmpty()) {
                 return List.of();
             }
             final HolidayResponse holidayResponse = objectMapper.readValue(json, HolidayResponse.class);
@@ -116,15 +131,5 @@ public class KoreaHolidayClient {
         } catch (Exception e) {
             throw new RuntimeException("Error while calling holiday API", e);
         }
-    }
-
-    public List<LocalDate> getHolidaysInYear(final int year) {
-        final String url = String.format(
-                "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo" +
-                        "?solYear=%d&_type=json&ServiceKey=%s",
-                year, apiKey
-        );
-
-        return fetch(url);
     }
 }
