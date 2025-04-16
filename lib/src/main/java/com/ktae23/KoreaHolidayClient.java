@@ -4,6 +4,7 @@
 package com.ktae23;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -19,7 +20,7 @@ public class KoreaHolidayClient {
 
     private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo";
 
-    private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s";
+    private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s&numOfRows=100";
 
     private final KoreaHolidayClientCache cache;
 
@@ -126,6 +127,11 @@ public class KoreaHolidayClient {
     }
 
     public List<LocalDate> getHolidaysInYear(final int year) {
-        return cache.getYearCache().get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
+        final Cache<Integer, List<LocalDate>> yearCache = cache.getYearCache();
+
+        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
+        yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
+
+        return yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
     }
 }
