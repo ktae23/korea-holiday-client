@@ -18,6 +18,8 @@ import static org.mockito.Mockito.when;
 
 class KoreaHolidayClientTest {
 
+    private static final String ERROR_MESSAGE = "Error while calling holiday API";
+
     private OkHttpClient mockHttpClient;
 
     private ObjectMapper objectMapper;
@@ -34,22 +36,6 @@ class KoreaHolidayClientTest {
         objectMapper = new ObjectMapper();
         cache = new KoreaHolidayClientCache();
         client = new KoreaHolidayClient(apiKey, mockHttpClient, objectMapper, cache);
-    }
-
-    private void mockHttpResponse(String json) throws IOException {
-        Call mockCall = mock(Call.class);
-        ResponseBody body = ResponseBody.create(json, MediaType.get("application/json"));
-
-        Response response = new Response.Builder()
-                .request(new Request.Builder().url("http://test").build())
-                .protocol(Protocol.HTTP_1_1)
-                .code(200)
-                .message("OK")
-                .body(body)
-                .build();
-
-        when(mockHttpClient.newCall(any())).thenReturn(mockCall);
-        when(mockCall.execute()).thenReturn(response);
     }
 
     @Test
@@ -251,4 +237,108 @@ class KoreaHolidayClientTest {
         cache.getYearListCache().put(year, cachedHolidays);
         return cachedHolidays;
     }
+
+    @Test
+    void testFetch_throwsException_whenHttpFails() throws IOException {
+        mockHttpResponseWithStatus(500, "Internal Server Error");
+
+        HolidayClientException exception = assertThrows(HolidayClientException.class, () -> {
+            client.getHolidaysInMonth(YearMonth.of(2024, 4));
+        });
+
+        assertTrue(exception.getMessage().contains(ERROR_MESSAGE));
+    }
+
+    @Test
+    void testFetch_returnsEmptyList_whenBodyIsNull() throws IOException {
+        mockHttpResponseWithNullBody();
+
+        final HolidayClientException holidayClientException = assertThrows(
+                HolidayClientException.class,
+                () -> client.getHolidaysInMonth(YearMonth.of(2024, 5))
+        );
+
+        assertTrue(holidayClientException.getMessage().contains(ERROR_MESSAGE));
+    }
+
+    @Test
+    void testFetch_returnsEmptyList_whenBodyIsEmptyString() throws IOException {
+        mockHttpResponse("");
+
+        List<LocalDate> holidays = client.getHolidaysInMonth(YearMonth.of(2024, 6));
+        assertTrue(holidays.isEmpty());
+    }
+
+    @Test
+    void testFetch_throwsException_whenJsonParsingFails() throws IOException {
+        String invalidJson = "{ invalid json }";
+        mockHttpResponse(invalidJson);
+
+        assertThrows(HolidayClientException.class, () -> {
+            client.getHolidaysInMonth(YearMonth.of(2024, 7));
+        });
+    }
+
+    @Test
+    void testFetch_throwsException_whenNetworkFails() throws IOException {
+        mockHttpNetworkFailure();
+
+        final HolidayClientException holidayClientException = assertThrows(HolidayClientException.class, () -> {
+            client.getHolidaysInMonth(YearMonth.of(2024, 8));
+        });
+
+        assertTrue(holidayClientException.getMessage().contains(ERROR_MESSAGE));
+    }
+
+    void mockHttpResponse(String body) throws IOException {
+        Response response = new Response.Builder()
+                .request(new Request.Builder().url("http://localhost").build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body(ResponseBody.create(body, MediaType.get("application/json")))
+                .build();
+
+        Call call = mock(Call.class);
+        when(call.execute()).thenReturn(response);
+        when(mockHttpClient.newCall(any())).thenReturn(call);
+    }
+
+    void mockHttpResponseWithStatus(int code, String message) throws IOException {
+        Response response = new Response.Builder()
+                .request(new Request.Builder().url("http://localhost").build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(code)
+                .message(message)
+                .body(ResponseBody.create("{}", MediaType.get("application/json")))
+                .build();
+
+        Call call = mock(Call.class);
+        when(call.execute()).thenReturn(response);
+        when(mockHttpClient.newCall(any())).thenReturn(call);
+    }
+
+    void mockHttpResponseWithNullBody() throws IOException {
+        Response response = new Response.Builder()
+                .request(new Request.Builder().url("http://localhost").build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body(null)
+                .build();
+
+        Call call = mock(Call.class);
+        when(call.execute()).thenReturn(response);
+        when(mockHttpClient.newCall(any())).thenReturn(call);
+    }
+
+    void mockHttpNetworkFailure() throws IOException {
+        Response response = mock(Response.class);
+
+        Call call = mock(Call.class);
+        when(call.execute()).thenReturn(response);
+        when(response.isSuccessful()).thenReturn(false);
+        when(mockHttpClient.newCall(any())).thenReturn(call);
+    }
+
 }
