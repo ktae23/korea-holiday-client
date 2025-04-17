@@ -50,7 +50,7 @@ jobs:
         run: |
           TAG="${{ steps.find_pr.outputs.tag }}"
           # build.gradle.kts와 README.md 내 implementation(...) 버전을 새로운 TAG로 교체
-          sed -i "s#implementation(\\"com.github.ktae23:korea-holiday-client:[^\\\"]*\\")#implementation(\\"com.github.ktae23:korea-holiday-client:$TAG\\")#g" build.gradle.kts README.md
+          sed -i "s#implementation(\\"com.github.ktae23:korea-holiday-client:[^\"]*\\")#implementation(\\"com.github.ktae23:korea-holiday-client:$TAG\\")#g" build.gradle.kts README.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git diff --exit-code build.gradle.kts README.md; then
@@ -60,6 +60,7 @@ jobs:
             git commit -m "chore: update version references to $TAG"
             git push origin main
           fi
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
