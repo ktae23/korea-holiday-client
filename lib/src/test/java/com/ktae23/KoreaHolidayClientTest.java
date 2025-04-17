@@ -171,6 +171,8 @@ class KoreaHolidayClientTest {
 
     @Test
     void testGetHolidaysInMonth_CacheHit() {
+        getYearCache(2022);
+        getYearCache(2024);
         final List<LocalDate> cachedHolidays = getYearCache(2023).stream()
                 .filter(
                         holiday -> YearMonth.of(holiday.getYear(), holiday.getMonthValue()).equals(YearMonth.of(2023, 1))
@@ -209,10 +211,11 @@ class KoreaHolidayClientTest {
 
     @Test
     void testGetHolidaysInYear_CacheHit() {
-        int year = 2023;
-        List<LocalDate> cachedHolidays = getYearCache(year);
+        getYearCache(2022);
+        getYearCache(2024);
+        List<LocalDate> cachedHolidays = getYearCache(2023);
 
-        List<LocalDate> holidays = client.getHolidaysInYear(year);
+        List<LocalDate> holidays = client.getHolidaysInYear(2023);
 
         assertEquals(2, holidays.size());
         assertEquals(cachedHolidays, holidays);
@@ -221,8 +224,8 @@ class KoreaHolidayClientTest {
     @NotNull
     private List<LocalDate> getYearCache(final int year) {
         List<LocalDate> cachedHolidays = List.of(
-                LocalDate.of(2023, 1, 1),
-                LocalDate.of(2023, 12, 25)
+                LocalDate.of(year, 1, 1),
+                LocalDate.of(year, 12, 25)
         );
 
         cache.getYearCache().put(year, cachedHolidays);
