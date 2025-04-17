@@ -64,3 +64,7 @@ boolean isHoliday = client.isHoliday(LocalDate.of(2025, 5, 5))
 LocalDate nWorkingDayAfter  = client.afterNWorkingDays(LocalDate.of(2025, 5, 1), 3)
 LocalDate nWorkingDayBefore  = client.beforeNWorkingDays(LocalDate.of(2025, 5, 1), 1)
 ```
+
+## 📝 License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
