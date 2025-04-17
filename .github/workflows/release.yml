@@ -49,23 +49,23 @@ jobs:
       - name: Update README version
         run: |
           TAG="${{ steps.find_pr.outputs.tag }}"
-          sed -i "s/com.github.ktae23:korea-holiday-client:[0-9]\+\.[0-9]\+\.[0-9]\+/com.github.ktae23:korea-holiday-client:$TAG/g" README.md
+          # build.gradle.kts와 README.md 내 implementation(...) 버전을 새로운 TAG로 교체
+          sed -i "s#implementation(\\"com.github.ktae23:korea-holiday-client:[^\\\"]*\\")#implementation(\\"com.github.ktae23:korea-holiday-client:$TAG\\")#g" build.gradle.kts README.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --exit-code README.md; then
-            echo "README already up to date"
+          if git diff --exit-code build.gradle.kts README.md; then
+            echo "No version changes"
           else
-            git add README.md
-            git commit -m "chore: update README version to $TAG"
+            git add build.gradle.kts README.md
+            git commit -m "chore: update version references to $TAG"
             git push origin main
           fi
-
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ steps.find_pr.outputs.tag }}
-          release_name: "Release ${{ steps.find_pr.outputs.tag }}"
+          release_name: "${{ steps.find_pr.outputs.tag }}"
           body: |
             자동 생성 릴리스: ${{ steps.find_pr.outputs.tag }}
           draft: false
