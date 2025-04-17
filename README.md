@@ -27,22 +27,6 @@
 ---
 
 ## 📦 설치 방법
-
-GitHub Packages에서 의존성을 추가합니다.
-
-
-```groovy
-// settings.gradle
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-    }
-}
-```
-
-
 ```kotlin
 // build.gradle.kts
 dependencies {
