@@ -11,6 +11,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -35,7 +38,6 @@ jobs:
             core.setOutput("tag", pulls[0].title.trim());
 
       - name: Create and push tag
-        id: create_tag
         run: |
           TAG="${{ steps.find_pr.outputs.tag }}"
           echo "Tagging release: $TAG"
@@ -43,8 +45,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG"
           git push origin "$TAG"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update README version
         run: |
@@ -52,7 +52,6 @@ jobs:
           sed -i "s/com.github.ktae23:korea-holiday-client:[0-9]\+\.[0-9]\+\.[0-9]\+/com.github.ktae23:korea-holiday-client:$TAG/g" README.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # 변경 사항이 있을 때만 커밋
           if git diff --exit-code README.md; then
             echo "README already up to date"
           else
@@ -64,6 +63,7 @@ jobs:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ steps.find_pr.outputs.tag }}
           release_name: "Release ${{ steps.find_pr.outputs.tag }}"
           body: |
