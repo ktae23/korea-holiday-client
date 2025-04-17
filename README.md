@@ -46,7 +46,7 @@ dependencyResolutionManagement {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("com.github.ktae23:korea-holiday-client:1.0.3")
+    implementation("com.github.ktae23:korea-holiday-client:${latestTag}")
 }
 ```
 
