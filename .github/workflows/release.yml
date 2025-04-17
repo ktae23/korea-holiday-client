@@ -1,0 +1,55 @@
+name: Release to JitPack
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Determine PR title for tag
+        id: find_pr
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+            if (!pulls.length) {
+              core.setFailed("No pull request found for this commit");
+              return;
+            }
+            core.setOutput("tag", pulls[0].title.trim());
+
+      - name: Create and push tag
+        run: |
+          TAG="${{ steps.find_pr.outputs.tag }}"
+          echo "Tagging release: $TAG"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update README version
+        run: |
+          TAG="${{ steps.find_pr.outputs.tag }}"
+          sed -i "s/com.github.ktae23:korea-holiday-client:[0-9]\+\.[0-9]\+\.[0-9]\+/com.github.ktae23:korea-holiday-client:$TAG/g" README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update README version to $TAG"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
