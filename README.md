@@ -27,27 +27,25 @@
 ---
 
 ## 📦 설치 방법
-
-GitHub Packages에서 의존성을 추가합니다.
-
-
-```groovy
-// settings.gradle
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-    }
-}
-```
-
-
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("com.github.ktae23:korea-holiday-client:1.0.5")
+    implementation("com.github.ktae23:korea-holiday-client:${latestTag}")
 }
+```
+```groovy
+// build.gradle
+dependencies {
+    implementation "com.github.ktae23:korea-holiday-client:${latestTag}"
+}
+```
+```xml
+// pom.xml
+<dependency>
+    <groupId>com.github.ktae23</groupId>
+    <artifactId>korea-holiday-client</artifactId>
+    <version>${latestTag}</version>
+</dependency>
 ```
 
 ## 💻 사용 예시
@@ -66,3 +64,7 @@ boolean isHoliday = client.isHoliday(LocalDate.of(2025, 5, 5))
 LocalDate nWorkingDayAfter  = client.afterNWorkingDays(LocalDate.of(2025, 5, 1), 3)
 LocalDate nWorkingDayBefore  = client.beforeNWorkingDays(LocalDate.of(2025, 5, 1), 1)
 ```
+
+## 📝 License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
