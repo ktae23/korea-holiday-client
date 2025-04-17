@@ -33,6 +33,20 @@ dependencies {
     implementation("com.github.ktae23:korea-holiday-client:${latestTag}")
 }
 ```
+```groovy
+// build.gradle
+dependencies {
+    implementation "com.github.ktae23:korea-holiday-client:${latestTag}"
+}
+```
+```xml
+// pom.xml
+<dependency>
+    <groupId>com.github.ktae23</groupId>
+    <artifactId>korea-holiday-client</artifactId>
+    <version>${latestTag}</version>
+</dependency>
+```
 
 ## 💻 사용 예시
 
