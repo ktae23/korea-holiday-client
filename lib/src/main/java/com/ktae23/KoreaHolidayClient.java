@@ -129,9 +129,11 @@ public class KoreaHolidayClient {
     public List<LocalDate> getHolidaysInYear(final int year) {
         final Cache<Integer, List<LocalDate>> yearCache = cache.getYearCache();
 
+        final List<LocalDate> holidaysInYear = yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
+
         yearCache.get(year - 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
         yearCache.get(year + 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
 
-        return yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
+        return holidaysInYear;
     }
 }

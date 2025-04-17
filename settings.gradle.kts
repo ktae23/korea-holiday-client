@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "korea-holiday-client"
-include("lib")
+include("lib", "examples")
