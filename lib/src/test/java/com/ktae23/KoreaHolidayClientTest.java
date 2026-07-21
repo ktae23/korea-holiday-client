@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,6 +21,9 @@ import static org.mockito.Mockito.when;
 class KoreaHolidayClientTest {
 
     private static final String ERROR_MESSAGE = "Error while calling holiday API";
+
+    /** HTTP 실패는 상위 메시지를 덮어쓰지 않고 그대로 전달한다. */
+    private static final String HTTP_FAIL_MESSAGE = "Failed to fetch holidays";
 
     private OkHttpClient mockHttpClient;
 
@@ -223,13 +228,13 @@ class KoreaHolidayClientTest {
 
     @NotNull
     private List<LocalDate> getYearCache(final int year) {
-        List<LocalDate> cachedHolidays = List.of(
+        final Set<LocalDate> cachedHolidays = new LinkedHashSet<>(List.of(
                 LocalDate.of(year, 1, 1),
                 LocalDate.of(year, 12, 25)
-        );
+        ));
 
         cache.getYearCache().put(year, cachedHolidays);
-        return cachedHolidays;
+        return cachedHolidays.stream().sorted().toList();
     }
 
     @Test
@@ -240,7 +245,8 @@ class KoreaHolidayClientTest {
             client.getHolidaysInMonth(YearMonth.of(2024, 4));
         });
 
-        assertTrue(exception.getMessage().contains(ERROR_MESSAGE));
+        assertTrue(exception.getMessage().contains(HTTP_FAIL_MESSAGE), exception.getMessage());
+        assertTrue(exception.getMessage().contains("500"), exception.getMessage());
     }
 
     @Test
@@ -281,7 +287,10 @@ class KoreaHolidayClientTest {
             client.getHolidaysInMonth(YearMonth.of(2024, 8));
         });
 
-        assertTrue(holidayClientException.getMessage().contains(ERROR_MESSAGE));
+        assertTrue(
+                holidayClientException.getMessage().contains(HTTP_FAIL_MESSAGE),
+                holidayClientException.getMessage()
+        );
     }
 
     void mockHttpResponse(String body) throws IOException {
