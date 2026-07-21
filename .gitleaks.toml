@@ -10,12 +10,13 @@ description = "공공데이터포털 서비스키(추정)"
 regex = '''(?i)["'=\s]([A-Za-z0-9+/]{60,}={0,2})["'\s]'''
 tags = ["key", "data.go.kr"]
 
-[[rules.allowlist]]
+[rules.allowlist]
 description = "플레이스홀더 및 문서 예시"
 regexes = [
   '''YOUR_API_KEY''',
   '''dummy-api-key''',
   '''발급받은_서비스키''',
+  '''REMOVED_REVOKED_API_KEY''',
 ]
 
 [allowlist]
