@@ -204,3 +204,16 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/gradle,java,intellij,macos
 # Ignore Gradle build output directory
 build
+
+### Secrets — 절대 커밋 금지 ###
+# 주의: 루트 gradle.properties 는 빌드 설정용이라 추적 대상이다.
+#       API 키·배포 자격증명은 ~/.gradle/gradle.properties (홈 디렉토리)에 둔다.
+secrets.properties
+local.properties
+.env
+.env.*
+*.gpg
+*.asc
+*.jks
+*.p12
+secring.gpg

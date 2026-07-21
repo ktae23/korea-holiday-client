@@ -1,0 +1,28 @@
+title = "korea-holiday-client gitleaks config"
+
+[extend]
+useDefault = true
+
+# 공공데이터포털 서비스키 — base64 44자 이상, 보통 '=='로 끝남
+[[rules]]
+id = "korea-public-data-service-key"
+description = "공공데이터포털 서비스키(추정)"
+regex = '''(?i)["'=\s]([A-Za-z0-9+/]{60,}={0,2})["'\s]'''
+tags = ["key", "data.go.kr"]
+
+[[rules.allowlist]]
+description = "플레이스홀더 및 문서 예시"
+regexes = [
+  '''YOUR_API_KEY''',
+  '''dummy-api-key''',
+  '''발급받은_서비스키''',
+]
+
+[allowlist]
+description = "스캔 제외 경로"
+paths = [
+  '''gradle/wrapper/gradle-wrapper\.jar''',
+  '''gradlew''',
+  '''gradlew\.bat''',
+  '''\.gitleaks\.toml''',
+]
