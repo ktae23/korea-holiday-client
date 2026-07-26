@@ -18,7 +18,7 @@ import java.util.List;
 
 public class KoreaHolidayClient {
 
-    private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo";
+    private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo";
 
     private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s&numOfRows=100";
 
