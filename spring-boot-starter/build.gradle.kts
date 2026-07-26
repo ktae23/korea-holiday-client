@@ -1,40 +1,37 @@
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    // Apply the java-library plugin for API and implementation separation.
     `java-library`
     id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
 repositories {
-    // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
 
+val springBootVersion = "3.3.4"
+
 dependencies {
+    api(project(":lib"))
+    api("org.springframework.boot:spring-boot-autoconfigure:$springBootVersion")
+
+    compileOnly("org.springframework.boot:spring-boot-configuration-processor:$springBootVersion")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:$springBootVersion")
+
+    testImplementation("org.springframework.boot:spring-boot-test:$springBootVersion")
+    testImplementation("org.springframework:spring-context:6.1.13")
+    testImplementation("org.assertj:assertj-core:3.25.3")
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
-
-    // 공개 API(생성자 파라미터)로 노출되므로 api 스코프로 전이 노출한다.
-    api("com.squareup.okhttp3:okhttp:4.12.0")
-    api("com.fasterxml.jackson.core:jackson-databind:2.15.3")
-    api("com.github.ben-manes.caffeine:caffeine:3.1.8")
-
-    compileOnly("org.jetbrains:annotations:24.1.0")
 }
 
 java {
-    // Apply a specific Java toolchain to ease working on different environments.
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
 tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
 
@@ -42,11 +39,11 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = false)
     signAllPublications()
 
-    coordinates(project.group.toString(), "korea-holiday-client", project.version.toString())
+    coordinates(project.group.toString(), "korea-holiday-spring-boot-starter", project.version.toString())
 
     pom {
-        name.set("korea-holiday-client")
-        description.set("공공데이터포털 특일정보 API를 감싸 한국 공휴일·주말·영업일 계산을 제공하는 Java 라이브러리")
+        name.set("korea-holiday-spring-boot-starter")
+        description.set("korea-holiday-client를 스프링 부트에서 자동설정으로 사용하는 스타터")
         url.set("https://github.com/ktae23/korea-holiday-client")
         licenses {
             license {

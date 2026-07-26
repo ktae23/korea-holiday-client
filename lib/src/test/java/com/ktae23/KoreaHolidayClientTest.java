@@ -18,7 +18,9 @@ import static org.mockito.Mockito.when;
 
 class KoreaHolidayClientTest {
 
-    private static final String ERROR_MESSAGE = "Error while calling holiday API";
+    private static final String CALL_ERROR_MESSAGE = "공휴일 API 호출 중 오류가 발생했습니다";
+
+    private static final String HTTP_ERROR_MESSAGE = "공휴일 조회에 실패했습니다";
 
     private OkHttpClient mockHttpClient;
 
@@ -240,19 +242,18 @@ class KoreaHolidayClientTest {
             client.getHolidaysInMonth(YearMonth.of(2024, 4));
         });
 
-        assertTrue(exception.getMessage().contains(ERROR_MESSAGE));
+        assertTrue(exception.getMessage().contains(HTTP_ERROR_MESSAGE));
     }
 
     @Test
-    void testFetch_returnsEmptyList_whenBodyIsNull() throws IOException {
+    void testFetch_throwsException_whenBodyIsNull() throws IOException {
         mockHttpResponseWithNullBody();
 
-        final HolidayClientException holidayClientException = assertThrows(
+        // 본문이 없는 비정상 응답은 HolidayClientException으로 감싸 던진다.
+        assertThrows(
                 HolidayClientException.class,
                 () -> client.getHolidaysInMonth(YearMonth.of(2024, 5))
         );
-
-        assertTrue(holidayClientException.getMessage().contains(ERROR_MESSAGE));
     }
 
     @Test
@@ -281,7 +282,47 @@ class KoreaHolidayClientTest {
             client.getHolidaysInMonth(YearMonth.of(2024, 8));
         });
 
-        assertTrue(holidayClientException.getMessage().contains(ERROR_MESSAGE));
+        assertTrue(holidayClientException.getMessage().contains(HTTP_ERROR_MESSAGE));
+    }
+
+    @Test
+    void testConstructor_throwsWhenApiKeyBlank() {
+        assertThrows(HolidayClientException.class, () -> new KoreaHolidayClient("  "));
+        assertThrows(HolidayClientException.class, () -> new KoreaHolidayClient(null));
+    }
+
+    @Test
+    void testFetch_doesNotLeakApiKeyInException() throws IOException {
+        final String fakeKey = "SUPER_SECRET_KEY_1234567890";
+        // 요청 URL에 키가 포함된 500 응답을 구성해, 예외 메시지에 키가 새지 않는지 검증한다.
+        Response response = new Response.Builder()
+                .request(new Request.Builder()
+                        .url("http://apis.data.go.kr/x?ServiceKey=" + fakeKey)
+                        .build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(500)
+                .message("Internal Server Error")
+                .body(ResponseBody.create("{}", MediaType.get("application/json")))
+                .build();
+        Call call = mock(Call.class);
+        when(call.execute()).thenReturn(response);
+        when(mockHttpClient.newCall(any())).thenReturn(call);
+
+        final HolidayClientException ex = assertThrows(
+                HolidayClientException.class,
+                () -> client.getHolidaysInYear(2024));
+        assertFalse(ex.getMessage().contains(fakeKey), "예외 메시지에 API 키가 노출되면 안 된다");
+    }
+
+    @Test
+    void testGetHolidaysInMonth_returnsEmptyWhenNoItems() throws IOException {
+        // items가 없는 정상 응답(해당 월 공휴일 없음)도 예외 없이 빈 목록을 반환해야 한다.
+        String json = """
+                      { "response": { "body": {} } }
+                      """;
+        mockHttpResponse(json);
+        final List<LocalDate> holidays = client.getHolidaysInMonth(YearMonth.of(2024, 11));
+        assertTrue(holidays.isEmpty());
     }
 
     void mockHttpResponse(String body) throws IOException {

@@ -204,3 +204,11 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/gradle,java,intellij,macos
 # Ignore Gradle build output directory
 build
+
+# 자격증명/시크릿 (커밋 금지)
+*.gpg
+*.asc
+secring.gpg
+local.properties
+.env
+.env.*

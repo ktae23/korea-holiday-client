@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "korea-holiday-client"
-include("lib", "examples")
+include("lib", "examples", "spring-boot-starter")

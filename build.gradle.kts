@@ -1,9 +1,9 @@
-group = "com.github.ktae23"
-version = "1.0.4"
+group = "io.github.ktae23"
+version = "1.1.0"
 
 subprojects {
     repositories {
         mavenCentral()
-         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
