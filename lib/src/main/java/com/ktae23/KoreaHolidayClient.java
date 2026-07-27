@@ -30,9 +30,13 @@ import java.util.List;
  */
 public class KoreaHolidayClient {
 
-    private static final String API_URL = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo";
-
-    private static final String YEAR_QUERY_STRING_FORMAT = API_URL + "?solYear=%d&_type=json&ServiceKey=%s&numOfRows=100";
+    /**
+     * 기본 엔드포인트(공공데이터포털 특일정보 getRestDeInfo). 자체 게이트웨이를 쓰려면 base URL을
+     * 지정하는 생성자를 사용한다. 게이트웨이는 동일한 {@code ?solYear=..&_type=json&ServiceKey=..&numOfRows=..}
+     * 계약을 그대로 흉내내면 클라이언트를 그대로 재사용할 수 있다.
+     */
+    public static final String DEFAULT_API_URL =
+            "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo";
 
     private static final DateTimeFormatter LOCDATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -43,6 +47,8 @@ public class KoreaHolidayClient {
     private final OkHttpClient okHttpClient;
 
     private final String apiKey;
+
+    private final String yearQueryFormat;
 
     /**
      * 기본 설정(기본 OkHttpClient/ObjectMapper, TTL 24시간 캐시)으로 클라이언트를 생성한다.
@@ -74,11 +80,26 @@ public class KoreaHolidayClient {
      * @throws HolidayClientException apiKey가 비어 있는 경우
      */
     public KoreaHolidayClient(final String apiKey, final KoreaHolidayClientCache cache) {
-        this(apiKey, new OkHttpClient(), new ObjectMapper(), cache);
+        this(apiKey, DEFAULT_API_URL, new OkHttpClient(), new ObjectMapper(), cache);
     }
 
     /**
-     * 모든 협력 객체를 직접 주입한다(주로 테스트/고급 설정용).
+     * 커스텀 엔드포인트(예: 자체 게이트웨이)를 지정해 클라이언트를 생성한다.
+     *
+     * <p>게이트웨이가 기본 엔드포인트와 동일한 쿼리 계약을 흉내내면 이 생성자로 base URL만 바꿔
+     * 그대로 사용할 수 있다. {@code apiKey}는 이 경우 게이트웨이가 발급한 키가 된다.
+     *
+     * @param apiKey 게이트웨이(또는 공공데이터포털)에서 발급받은 키. null/빈 문자열이면 예외
+     * @param apiUrl 호출할 엔드포인트 base URL(쿼리스트링 제외). null/빈 문자열이면 기본값
+     * @throws HolidayClientException apiKey가 비어 있는 경우
+     * @since 1.2.0
+     */
+    public KoreaHolidayClient(final String apiKey, final String apiUrl) {
+        this(apiKey, apiUrl, new OkHttpClient(), new ObjectMapper(), new KoreaHolidayClientCache());
+    }
+
+    /**
+     * 모든 협력 객체를 직접 주입한다(주로 테스트/고급 설정용). 엔드포인트는 기본값을 사용한다.
      *
      * @param apiKey       공공데이터포털 특일정보 서비스키(디코딩 키). null/빈 문자열이면 예외
      * @param okHttpClient HTTP 호출에 사용할 클라이언트
@@ -90,13 +111,33 @@ public class KoreaHolidayClient {
             final String apiKey, final OkHttpClient okHttpClient, final ObjectMapper objectMapper,
             final KoreaHolidayClientCache cache
     ) {
+        this(apiKey, DEFAULT_API_URL, okHttpClient, objectMapper, cache);
+    }
+
+    /**
+     * 엔드포인트와 모든 협력 객체를 직접 주입하는 전체 생성자.
+     *
+     * @param apiKey       발급받은 키. null/빈 문자열이면 예외
+     * @param apiUrl       호출할 엔드포인트 base URL(쿼리스트링 제외). null/빈 문자열이면 기본값
+     * @param okHttpClient HTTP 호출에 사용할 클라이언트
+     * @param objectMapper JSON 파싱에 사용할 매퍼
+     * @param cache        연도별 공휴일 캐시
+     * @throws HolidayClientException apiKey가 비어 있는 경우
+     * @since 1.2.0
+     */
+    public KoreaHolidayClient(
+            final String apiKey, final String apiUrl, final OkHttpClient okHttpClient,
+            final ObjectMapper objectMapper, final KoreaHolidayClientCache cache
+    ) {
         if (apiKey == null || apiKey.isBlank()) {
-            throw new HolidayClientException("API 키가 필요합니다. 공공데이터포털 특일정보 서비스키를 주입하세요.");
+            throw new HolidayClientException("API 키가 필요합니다. 발급받은 서비스키를 주입하세요.");
         }
+        final String baseUrl = (apiUrl == null || apiUrl.isBlank()) ? DEFAULT_API_URL : apiUrl;
         this.okHttpClient = okHttpClient;
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.cache = cache;
+        this.yearQueryFormat = baseUrl + "?solYear=%d&_type=json&ServiceKey=%s&numOfRows=100";
     }
 
     /**
@@ -230,10 +271,10 @@ public class KoreaHolidayClient {
     public List<LocalDate> getHolidaysInYear(final int year) {
         final Cache<Integer, List<LocalDate>> yearCache = cache.getYearCache();
 
-        final List<LocalDate> holidaysInYear = yearCache.get(year, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year, apiKey)));
+        final List<LocalDate> holidaysInYear = yearCache.get(year, ym -> fetch(String.format(yearQueryFormat, year, apiKey)));
 
-        yearCache.get(year - 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year - 1, apiKey)));
-        yearCache.get(year + 1, ym -> fetch(String.format(YEAR_QUERY_STRING_FORMAT, year + 1, apiKey)));
+        yearCache.get(year - 1, ym -> fetch(String.format(yearQueryFormat, year - 1, apiKey)));
+        yearCache.get(year + 1, ym -> fetch(String.format(yearQueryFormat, year + 1, apiKey)));
 
         return holidaysInYear;
     }

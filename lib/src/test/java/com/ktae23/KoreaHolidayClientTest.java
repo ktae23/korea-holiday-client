@@ -11,9 +11,13 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class KoreaHolidayClientTest {
@@ -283,6 +287,26 @@ class KoreaHolidayClientTest {
         });
 
         assertTrue(holidayClientException.getMessage().contains(HTTP_ERROR_MESSAGE));
+    }
+
+    @Test
+    void testUsesCustomGatewayBaseUrl() throws IOException {
+        // 게이트웨이 base URL을 지정하면 data.go.kr이 아니라 그 URL로 호출해야 한다.
+        KoreaHolidayClient gwClient = new KoreaHolidayClient(
+                "gw-issued-key", "https://gw.example.com/v1/holidays",
+                mockHttpClient, objectMapper, cache);
+        mockHttpResponse("""
+                { "response": { "body": { "items": { "item": [] } } } }
+                """);
+
+        gwClient.getHolidaysInYear(2025);
+
+        ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
+        verify(mockHttpClient, atLeastOnce()).newCall(captor.capture());
+        String calledUrl = captor.getValue().url().toString();
+        assertTrue(calledUrl.startsWith("https://gw.example.com/v1/holidays"),
+                "게이트웨이 base URL로 호출되어야 한다: " + calledUrl);
+        assertTrue(calledUrl.contains("ServiceKey=gw-issued-key"));
     }
 
     @Test
